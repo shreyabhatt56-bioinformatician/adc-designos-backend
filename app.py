@@ -11,13 +11,27 @@ import random
 import hashlib
 from datetime import datetime
 
+import os
+
 app = Flask(__name__)
+
+API_SECRET = os.environ.get("ADC_API_KEY", "my_secret_dev_key")
+
+@app.before_request
+def require_api_key():
+    if request.method == "OPTIONS" or request.path == "/api/health":
+        return # Let pre-flight and health checks pass
+        
+    if request.path.startswith("/api/"):
+        key = request.headers.get("X-API-Key")
+        if key != API_SECRET:
+            return jsonify({"error": "Unauthorized"}), 401
 
 @app.after_request
 def add_cors(r):
     r.headers["Access-Control-Allow-Origin"] = "*"
-    r.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    r.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    r.headers["Access-Control-Allow-Headers"] = "Content-Type, X-API-Key"
+    r.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS,DELETE"
     return r
 
 
@@ -474,11 +488,6 @@ def api_list_payloads():
 def api_list_linkers():
     return jsonify({k: {"type":v["type"],"stability":v["stability"],"plasma_t12_h":v["plasma_t12_h"]}
                     for k,v in LINKER_DB.items()})
-
-if __name__ == "__main__":
-    print("ADC-DesignOS API — PhyloBandits")
-    print("Running on http://0.0.0.0:8000")
-    app.run(host="0.0.0.0", port=8000, debug=False)
 
 
 # ─────────────────────────────────────────────
