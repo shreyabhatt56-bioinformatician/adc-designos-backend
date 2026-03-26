@@ -1776,3 +1776,19 @@ def api_paywall_verify():
         return jsonify({"verified": True, "tier": new_tier, "message": f"Payment verified. {new_tier.title()} plan activated."})
     except Exception as e:
         return jsonify({"verified": False, "error": str(e)}), 400
+
+
+# --- ENTERPRISE ENDPOINTS ---
+from enterprise import fetch_pubchem_data, profile_target_safety, generate_novel_linkers, run_auto_design_pipeline, process_batch
+@app.route('/api/auto-design', methods=['POST'])
+def api_auto_design():
+    return jsonify(run_auto_design_pipeline(request.json.get('target', '')))
+@app.route('/api/target-safety', methods=['POST'])
+def api_target_safety():
+    return jsonify(profile_target_safety(request.json.get('target', '')))
+@app.route('/api/payload-live', methods=['POST'])
+def api_payload_live():
+    return jsonify(fetch_pubchem_data(request.json.get('payload', '')))
+@app.route('/api/generate-linkers', methods=['POST'])
+def api_generate_linkers():
+    return jsonify({'linkers': generate_novel_linkers(request.json.get('constraints', ''))})
